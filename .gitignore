@@ -1,0 +1,19 @@
+logs
+target
+/.bsp
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
+
+# Misc
+PowerShell*
+null
+
+# Metals
+.metals
+.bloop
+metals.sbt
+project/project
