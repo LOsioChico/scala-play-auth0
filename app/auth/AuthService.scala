@@ -17,11 +17,13 @@ class AuthService @Inject() (
 
   private val jwtRegex = """(.+?)\.(.+?)\.(.+?)""".r
 
-  private def domain = config.get[String]("auth0.domain")
-  private def audience = config.get[String]("auth0.audience")
+  private val domain = config.get[String]("auth0.domain")
+  private val audience = config.get[String]("auth0.audience")
 
-  private def issuer = s"https://$domain/"
-  private def jwksUrl = s"https://$domain/.well-known/jwks.json"
+  private val issuer = s"https://$domain/"
+  private val jwksUrl = s"https://$domain/.well-known/jwks.json"
+
+  private val loginUrl = s"https://$domain/oauth/token"
 
   // Validates a JWT and potentially returns the claims if the token was
   // successfully parsed and validated
