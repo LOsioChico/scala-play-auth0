@@ -1,0 +1,94 @@
+@import play.api.mvc.Flash
+
+@(domain: String, clientId: String)(implicit flash: Flash)
+
+@main("Login") {
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+  <div class="max-w-md w-full space-y-8">
+    <div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Sign in to your account
+      </h2>
+    </div>
+    <div class="mt-8">
+      <form id="loginForm" class="space-y-6">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">
+            Email address
+          </label>
+          <div class="mt-1">
+            <input id="email" name="email" type="email" required autocomplete="email" value="test@@gmail.com"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <div class="mt-1">
+            <input id="password" name="password" type="password" required autocomplete="current-password"
+              value="test123!"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <button type="submit"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Sign in
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.auth0.com/js/auth0/9.11/auth0.min.js"></script>
+<script>
+  window.onload = async () => {
+    const webAuth = new auth0.WebAuth({
+      domain: '@domain',
+      clientID: '@clientId',
+      redirectUri: window.location.origin + '/api/callback',
+      scope: 'openid profile email'
+    });
+
+    const session = {
+      isFetching: true,
+      data: null
+    };
+
+    await webAuth.checkSession({
+      redirectUri: window.location.origin + '/api/callback',
+      responseType: 'token'
+    }, (err, result) => {
+      session.isFetching = false;
+      session.data = result;
+    });
+
+    while (session.isFetching)
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+    if (session.data) window.location.href = '/';
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      webAuth.login({
+        realm: 'Username-Password-Authentication',
+        username: email,
+        password: password,
+        responseType: 'code'
+      }, function (err) {
+        if (err) {
+          console.error('Login error:', err);
+          alert('Login failed. Please check your credentials and try again.');
+        }
+      });
+    })
+  };
+</script>
+}
