@@ -5,20 +5,12 @@ import play.api.mvc._
 import play.api.Configuration
 import auth.AuthService
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.libs.json.Json
 import views.html.home
 import scala.util.{Success, Failure}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.Reads
-
-case class CreateSessionRequest(
-    access_token: String,
-    refresh_token: Option[String],
-    id_token: Option[String]
-)
-
-case class LoginRequest(email: String, password: String)
+import play.api.libs.json.Json
+import models._
 
 class AuthController @Inject() (
     val controllerComponents: ControllerComponents,
@@ -31,9 +23,6 @@ class AuthController @Inject() (
   private val clientId = config.get[String]("auth0.clientId")
   private val redirectUri = config.get[String]("auth0.redirectUri")
   private val audience = config.get[String]("auth0.audience")
-
-  implicit val createSessionReads: Reads[CreateSessionRequest] =
-    Json.reads[CreateSessionRequest]
 
   def login(): Action[AnyContent] = Action { implicit request =>
     request.session.get("access_token") match {
@@ -48,16 +37,20 @@ class AuthController @Inject() (
     val loginRequest = for {
       email <- (jsonBody \ "email").asOpt[String]
       password <- (jsonBody \ "password").asOpt[String]
-    } yield authService.loginWithPassword(email, password).map {
+    } yield authService.loginWithPassword(email, password).flatMap {
       case Right(tokenResponse) =>
-        Redirect(routes.AuthController.home())
-          .withSession(
+        authService.getUserInfo(tokenResponse.access_token).map { userInfo =>
+          val session = Map(
             "access_token" -> tokenResponse.access_token,
             "refresh_token" -> tokenResponse.refresh_token.getOrElse(""),
-            "id_token" -> tokenResponse.id_token.getOrElse("")
+            "id_token" -> tokenResponse.id_token.getOrElse(""),
+            "user_info" -> Json.toJson(userInfo).toString()
           )
+          Redirect(routes.AuthController.home())
+            .withSession(session.toSeq: _*)
+        }
       case Left(result) =>
-        Unauthorized(result)
+        Future.successful(Unauthorized(result))
     }
 
     loginRequest.getOrElse(
@@ -71,15 +64,7 @@ class AuthController @Inject() (
         case Some(authCode) =>
           authService.getAuthorizationCodeToken(authCode).flatMap {
             case Some(tokenResponse) =>
-              Future.successful(
-                Redirect("/")
-                  .withSession(
-                    "access_token" -> tokenResponse.access_token,
-                    "refresh_token" -> tokenResponse.refresh_token
-                      .getOrElse(""),
-                    "id_token" -> tokenResponse.id_token.getOrElse("")
-                  )
-              )
+              Future.successful(Ok("Token received"))
             case None =>
               Future.successful(Unauthorized("Failed to get token"))
           }
@@ -100,7 +85,18 @@ class AuthController @Inject() (
     request.session.get("access_token") match {
       case Some(token) =>
         authService.validateJwt(token).map {
-          case Success(_) => Ok(views.html.home())
+          case Success(_) =>
+            request.session
+              .get("user_info")
+              .map { userInfoStr =>
+                val userInfo = Json.parse(userInfoStr).as[UserInfo]
+                Ok(views.html.home(userInfo))
+              }
+              .getOrElse {
+                Redirect(routes.AuthController.login())
+                  .flashing("error" -> "User info not found")
+                  .withNewSession
+              }
           case Failure(_) =>
             Redirect(routes.AuthController.login())
               .flashing(
@@ -109,32 +105,7 @@ class AuthController @Inject() (
               .withNewSession
         }
       case None =>
-        Future.successful(Ok(views.html.home()))
+        Future.successful(Ok(views.html.home(UserInfo.empty)))
     }
-  }
-
-  def createSession() = Action.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreateSessionRequest]
-      .fold(
-        errors => {
-          Future.successful(
-            BadRequest(Json.obj("message" -> "Invalid request format"))
-          )
-        },
-        session => {
-          authService.validateJwt(session.access_token).map {
-            case Success(_) =>
-              Ok("Session created")
-                .withSession(
-                  "access_token" -> session.access_token,
-                  "refresh_token" -> session.refresh_token.getOrElse(""),
-                  "id_token" -> session.id_token.getOrElse("")
-                )
-            case Failure(e) =>
-              Unauthorized(Json.obj("message" -> "Invalid token"))
-          }
-        }
-      )
   }
 }

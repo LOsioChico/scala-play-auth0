@@ -1,4 +1,6 @@
-@()(implicit request: RequestHeader)
+@import play.api.libs.json.Json
+
+@(userInfo: UserInfo)(implicit request: RequestHeader)
 
 @main("Home") {
 <div class="min-h-screen bg-gray-100">
@@ -11,7 +13,8 @@
           </div>
         </div>
         <div class="flex items-center">
-          @request.session.get("access_token").map { _ =>
+          @request.session.get("user_info").map { userInfoStr =>
+          <span>@userInfo.email</span>
           <a href="/logout"
             class="ml-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
             Sign Out
@@ -30,11 +33,13 @@
   <div class="py-10">
     <main>
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        @request.session.get("access_token").map { _ =>
+        @request.session.get("user_info").map { userInfoStr =>
         <div class="px-4 py-8 sm:px-0">
           <div class="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
             <h2 class="text-2xl font-bold mb-4">Welcome!</h2>
             <p>You are authenticated.</p>
+            <br />
+            <pre class="whitespace-pre-wrap"><code>@Json.prettyPrint(Json.parse(userInfoStr))</code></pre>
           </div>
         </div>
         }.getOrElse {
