@@ -50,7 +50,7 @@ class AuthController @Inject() (
             .withSession(session.toSeq: _*)
         }
       case Left(result) =>
-        Future.successful(Unauthorized(result))
+        Future.successful(Unauthorized(Json.toJson(result)))
     }
 
     loginRequest.getOrElse(
