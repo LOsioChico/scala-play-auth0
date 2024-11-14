@@ -125,9 +125,13 @@ class AuthService @Inject() (
   }
 
   private def fetchJwks(): Future[Seq[Jwk]] =
-    ws.url(jwksUrl)
-      .get()
-      .map(response => (response.json \ "keys").as[Seq[Jwk]])
+    makeAuthRequest(jwksUrl) {
+      response =>
+        response.status match {
+          case 200 => (response.json \ "keys").as[Seq[Jwk]]
+          case _   => Seq.empty
+        }
+    }
 
   private def getJwk(token: String, jwks: Seq[Jwk]): Try[Jwk] =
     (splitToken andThen decodeElements)(token) flatMap {
