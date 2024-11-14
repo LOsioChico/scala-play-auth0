@@ -1,12 +1,16 @@
+# Auth routes
+
+GET /login controllers.AuthController.login()
+POST /login controllers.AuthController.handleLogin()
+GET /logout controllers.AuthController.logout()
+GET /callback controllers.AuthController.callback(code: Option[String], state: Option[String])
+
+# Web routes
+
+GET / controllers.AuthController.home()
+
 # API routes
 
-GET /api/ping controllers.ApiController.ping
+GET /api/ping controllers.ApiController.ping()
 GET /api/posts/:postId controllers.ApiController.getPost(postId: Int)
 GET /api/posts/:postId/comments controllers.ApiController.getComments(postId: Int)
-
-GET /api/callback controllers.AuthController.callback
-
-# Views routes
-
-GET / controllers.AuthController.home
-GET /login controllers.AuthController.login

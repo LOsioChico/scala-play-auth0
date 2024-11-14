@@ -1,9 +1,7 @@
-@import play.api.mvc.Flash
-
-@(domain: String, clientId: String)(implicit flash: Flash)
+@()(implicit request: RequestHeader)
 
 @main("Login") {
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full space-y-8">
     <div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -11,13 +9,13 @@
       </h2>
     </div>
     <div class="mt-8">
-      <form id="loginForm" class="space-y-6">
+      <form class="space-y-6" id="loginForm">
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700">
             Email address
           </label>
           <div class="mt-1">
-            <input id="email" name="email" type="email" required autocomplete="email" value="test@@gmail.com"
+            <input id="email" name="email" type="email" required value="test@@gmail.com"
               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
           </div>
         </div>
@@ -27,9 +25,19 @@
             Password
           </label>
           <div class="mt-1">
-            <input id="password" name="password" type="password" required autocomplete="current-password"
-              value="test123!"
+            <input id="password" name="password" type="password" required value="test123!"
               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="rounded-md bg-red-50 p-4 hidden" id="error">
+          <div class="flex">
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Error</h3>
+              <div class="mt-2 text-sm text-red-700">
+                <p id="errorMessage"></p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -44,51 +52,26 @@
   </div>
 </div>
 
-<script src="https://cdn.auth0.com/js/auth0/9.11/auth0.min.js"></script>
 <script>
-  window.onload = async () => {
-    const webAuth = new auth0.WebAuth({
-      domain: '@domain',
-      clientID: '@clientId',
-      redirectUri: window.location.origin + '/api/callback',
-      scope: 'openid profile email'
-    });
+  window.onload = function () {
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+      event.preventDefault();
 
-    const session = {
-      isFetching: true,
-      data: null
-    };
+      const formData = Object.fromEntries(new FormData(this));
 
-    await webAuth.checkSession({
-      redirectUri: window.location.origin + '/api/callback',
-      responseType: 'token'
-    }, (err, result) => {
-      session.isFetching = false;
-      session.data = result;
-    });
-
-    while (session.isFetching)
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-    if (session.data) window.location.href = '/';
-
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      webAuth.login({
-        realm: 'Username-Password-Authentication',
-        username: email,
-        password: password,
-        responseType: 'code'
-      }, function (err) {
-        if (err) {
-          console.error('Login error:', err);
-          alert('Login failed. Please check your credentials and try again.');
-        }
+      fetch("/login", {
+        method: "POST",
+        body: JSON.stringify(formData)
+      }).then((response) => {
+        if (response.ok)
+          window.location.href = "/";
+        else
+          throw new Error("Wrong email or password.");
+      }).catch((error) => {
+        document.getElementById("error").classList.remove("hidden");
+        document.getElementById("errorMessage").innerText = error.message;
       });
-    })
+    });
   };
 </script>
 }
