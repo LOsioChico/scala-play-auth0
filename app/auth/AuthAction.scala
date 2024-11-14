@@ -4,9 +4,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
 
 import javax.inject.Inject
-import pdi.jwt._
-import play.api.http.HeaderNames
-import play.api.mvc._
+import pdi.jwt.{ JwtClaim, JwtJson }
+import play.api.mvc.{ ActionBuilder, AnyContent, BodyParser, BodyParsers, Request, Result, Results, WrappedRequest }
 
 case class UserRequest[A](
   jwt: JwtClaim,

@@ -4,7 +4,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 
 import javax.inject.Inject
-import pdi.jwt._
+import pdi.jwt.{ JwtAlgorithm, JwtBase64, JwtClaim, JwtJson }
 import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
@@ -12,7 +12,7 @@ import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSBodyWritables.writeableOf_urlEncodedForm
 import play.api.mvc.Session
 
-import models._
+import models.{ Jwk, TokenResponse, UserInfo }
 
 class AuthService @Inject() (
   config: Configuration,

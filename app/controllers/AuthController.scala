@@ -5,13 +5,11 @@ import scala.util.{ Failure, Success }
 
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.data.Form
-import play.api.data.Forms._
 import play.api.libs.json.Json
-import play.api.mvc._
+import play.api.mvc.{ Action, AnyContent, BaseController, ControllerComponents }
 
 import auth.AuthService
-import models._
+import models.{ TokenResponse, UserInfo }
 
 class AuthController @Inject() (
   val controllerComponents: ControllerComponents,
