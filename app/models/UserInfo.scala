@@ -1,15 +1,15 @@
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
 case class UserInfo(
-    email: String,
-    email_verified: Boolean,
-    name: String,
-    nickname: String,
-    picture: String,
-    sub: String,
-    updated_at: String
+  email: String,
+  email_verified: Boolean,
+  name: String,
+  nickname: String,
+  picture: String,
+  sub: String,
+  updated_at: String
 )
 
 object UserInfo {

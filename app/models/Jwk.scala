@@ -1,6 +1,6 @@
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
 case class Jwk(kid: String, n: String, e: String)
 

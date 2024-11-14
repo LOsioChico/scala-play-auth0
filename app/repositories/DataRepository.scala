@@ -1,7 +1,7 @@
 package repositories
 
 import javax.inject.Singleton
-import models.{Comment, Post}
+import models.{ Comment, Post }
 
 @Singleton
 class DataRepository {

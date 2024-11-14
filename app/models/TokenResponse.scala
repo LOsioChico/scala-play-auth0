@@ -1,13 +1,13 @@
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
 case class TokenResponse(
-    access_token: String,
-    refresh_token: Option[String],
-    id_token: Option[String],
-    token_type: String,
-    expires_in: Int
+  access_token: String,
+  refresh_token: Option[String],
+  id_token: Option[String],
+  token_type: String,
+  expires_in: Int
 )
 
 object TokenResponse {
