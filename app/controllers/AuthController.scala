@@ -26,7 +26,7 @@ class AuthController @Inject() (
 
   def login(): Action[AnyContent] = Action { implicit request =>
     request.session.get("access_token") match {
-      case Some(_) => Redirect(routes.AuthController.home())
+      case Some(_) => Redirect(routes.ApiController.home())
       case None    => Ok(views.html.auth.login())
     }
   }
@@ -46,7 +46,7 @@ class AuthController @Inject() (
             "id_token" -> tokenResponse.id_token.getOrElse(""),
             "user_info" -> Json.toJson(userInfo).toString()
           )
-          Redirect(routes.AuthController.home())
+          Redirect(routes.ApiController.home())
             .withSession(session.toSeq: _*)
         }
       case Left(result) =>
@@ -79,33 +79,5 @@ class AuthController @Inject() (
       s"&returnTo=${config.get[String]("auth0.postLogoutRedirectUri")}"
 
     Redirect(logoutUrl).withNewSession
-  }
-
-  def home: Action[AnyContent] = Action.async { implicit request =>
-    request.session.get("access_token") match {
-      case Some(token) =>
-        authService.validateJwt(token).map {
-          case Success(_) =>
-            request.session
-              .get("user_info")
-              .map { userInfoStr =>
-                val userInfo = Json.parse(userInfoStr).as[UserInfo]
-                Ok(views.html.home(userInfo))
-              }
-              .getOrElse {
-                Redirect(routes.AuthController.login())
-                  .flashing("error" -> "User info not found")
-                  .withNewSession
-              }
-          case Failure(_) =>
-            Redirect(routes.AuthController.login())
-              .flashing(
-                "error" -> "Your session has expired. Please sign in again."
-              )
-              .withNewSession
-        }
-      case None =>
-        Future.successful(Ok(views.html.home(UserInfo.empty)))
-    }
   }
 }

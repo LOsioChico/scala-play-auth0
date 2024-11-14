@@ -7,7 +7,8 @@ GET /callback controllers.AuthController.callback(code: Option[String], state: O
 
 # Web routes
 
-GET / controllers.AuthController.home()
+GET / controllers.ApiController.home()
+GET /protected controllers.ApiController.protectedHome()
 
 # API routes
 

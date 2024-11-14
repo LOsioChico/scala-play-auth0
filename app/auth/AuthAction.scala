@@ -20,13 +20,11 @@ class AuthAction @Inject() (
   override def parser: BodyParser[AnyContent] = bodyParser
   override protected def executionContext: ExecutionContext = ec
 
-  private val headerTokenRegex = """(?i)bearer (.+?)""".r
-
   override def invokeBlock[A](
       request: Request[A],
       block: UserRequest[A] => Future[Result]
   ): Future[Result] =
-    extractBearerToken(request) match {
+    request.session.get("access_token") match {
       case Some(token) =>
         authService.validateJwt(token).flatMap {
           case Success(claim) => block(UserRequest(claim, token, request))
@@ -36,10 +34,5 @@ class AuthAction @Inject() (
       case None =>
         Future.successful(Results.Unauthorized)
 
-    }
-
-  private def extractBearerToken[A](request: Request[A]): Option[String] =
-    request.headers.get(HeaderNames.AUTHORIZATION) collect {
-      case headerTokenRegex(token) => token
     }
 }

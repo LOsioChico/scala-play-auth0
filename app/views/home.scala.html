@@ -1,6 +1,7 @@
 @import play.api.libs.json.Json
+@import models.Post
 
-@(userInfo: UserInfo)(implicit request: RequestHeader)
+@(userInfo: UserInfo, posts: Seq[Post])(implicit request: RequestHeader)
 
 @main("Home") {
 <div class="min-h-screen bg-gray-100">
@@ -34,34 +35,73 @@
     <main>
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         @request.session.get("user_info").map { userInfoStr =>
-        <div class="px-4 py-8 sm:px-0">
-          <div class="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
-            <h2 class="text-2xl font-bold mb-4">Welcome!</h2>
-            <p>You are authenticated.</p>
-            <br />
-            <pre class="whitespace-pre-wrap"><code>@Json.prettyPrint(Json.parse(userInfoStr))</code></pre>
-          </div>
-        </div>
-        }.getOrElse {
-        <div class="text-center">
-          <h2 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            <span class="block">Welcome to Scala Play Auth0</span>
-          </h2>
-          <p class="mt-4 text-lg leading-6 text-gray-500">
-            Please sign in to access the application.
-          </p>
-          <div class="mt-8 flex justify-center">
-            <div class="inline-flex rounded-md shadow">
-              <a href="/login"
-                class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                Get started
-              </a>
+        <div class="space-y-8">
+          <div class="px-4 py-8 sm:px-0">
+            <div class="border-4 border-dashed border-gray-200 rounded-lg p-4">
+              <h2 class="text-2xl font-bold mb-4">Welcome!</h2>
+              <p>You are authenticated.</p>
+              <br />
+              <pre class="whitespace-pre-wrap"><code>@Json.prettyPrint(Json.parse(userInfoStr))</code></pre>
             </div>
           </div>
+
+          <div class="px-4 sm:px-0">
+            <h2 class="text-2xl font-bold mb-6">Latest Posts</h2>
+            <div class="space-y-6">
+              @for(post <- posts) { <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">@post.content</h3>
+                <div class="space-y-4" id="comments-@post.id">
+                  <h4 class="text-lg font-medium text-gray-700">Comments</h4>
+                  <div class="animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="space-y-3 mt-4">
+                      <div class="h-3 bg-gray-200 rounded"></div>
+                      <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            <script>
+              fetch('/api/posts/@post.id/comments')
+                .then(response => response.json())
+                .then(comments => {
+                  const commentsHtml = comments.map(comment => `
+                        <div class="border-t border-gray-200 pt-4">
+                          <p class="text-gray-700">${comment.text}</p>
+                          <p class="text-sm text-gray-500 mt-1">- ${comment.authorName}</p>
+                        </div>
+                      `).join('');
+                  document.getElementById('comments-@post.id').innerHTML = `
+                        <h4 class="text-lg font-medium text-gray-700">Comments</h4>
+                        ${commentsHtml}
+                      `;
+                });
+            </script>
+            }
+          </div>
         </div>
-        }
       </div>
-    </main>
+      }.getOrElse {
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <span class="block">Welcome to Scala Play Auth0</span>
+        </h2>
+        <p class="mt-4 text-lg leading-6 text-gray-500">
+          Please sign in to access the application.
+        </p>
+        <div class="mt-8 flex justify-center">
+          <div class="inline-flex rounded-md shadow">
+            <a href="/login"
+              class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+              Get started
+            </a>
+          </div>
+        </div>
+      </div>
+      }
   </div>
+  </main>
+</div>
 </div>
 }
