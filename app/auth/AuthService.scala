@@ -96,75 +96,85 @@ class AuthService @Inject() (
     else Failure(new Exception("The JWT did not pass validation"))
   }
 
+  private def makeAuthRequest[T](
+      url: String,
+      method: String = "GET",
+      headers: Seq[(String, String)] = Seq.empty,
+      body: Option[Map[String, Seq[String]]] = None
+  )(transform: play.api.libs.ws.WSResponse => T): Future[T] = {
+    val request = ws
+      .url(url)
+      .withHttpHeaders(headers: _*)
+
+    val finalRequest = method match {
+      case "POST" => request.post(body.getOrElse(Map.empty))
+      case _      => request.get()
+    }
+
+    finalRequest.map(transform)
+  }
+
   def getAuthorizationCodeToken(code: String): Future[Option[TokenResponse]] = {
-    ws.url(tokenUrl)
-      .withHttpHeaders(
-        HeaderNames.CONTENT_TYPE -> "application/x-www-form-urlencoded"
-      )
-      .post(
-        Map(
-          "grant_type" -> Seq("authorization_code"),
-          "client_id" -> Seq(clientId),
-          "client_secret" -> Seq(clientSecret),
-          "code" -> Seq(code),
-          "redirect_uri" -> Seq(redirectUri)
-        )
-      )
-      .map { response =>
-        response.status match {
-          case 200 =>
-            Some(response.json.as[TokenResponse])
-          case _ => None
-        }
+    val body = Map(
+      "grant_type" -> Seq("authorization_code"),
+      "client_id" -> Seq(clientId),
+      "client_secret" -> Seq(clientSecret),
+      "code" -> Seq(code),
+      "redirect_uri" -> Seq(redirectUri)
+    )
+
+    makeAuthRequest(
+      url = tokenUrl,
+      method = "POST",
+      headers =
+        Seq(HeaderNames.CONTENT_TYPE -> "application/x-www-form-urlencoded"),
+      body = Some(body)
+    ) { response =>
+      response.status match {
+        case 200 => Some(response.json.as[TokenResponse])
+        case _   => None
       }
-      .recover { case _ => None }
+    }.recover { case _ => None }
   }
 
   def loginWithPassword(
       email: String,
       password: String
   ): Future[Either[String, TokenResponse]] = {
-    ws.url(tokenUrl)
-      .withHttpHeaders(
-        HeaderNames.CONTENT_TYPE -> "application/x-www-form-urlencoded"
-      )
-      .post(
-        Map(
-          "grant_type" -> Seq("password"),
-          "username" -> Seq(email),
-          "password" -> Seq(password),
-          "client_id" -> Seq(clientId),
-          "client_secret" -> Seq(clientSecret),
-          "audience" -> Seq(audience),
-          "scope" -> Seq("openid profile email offline_access")
-        )
-      )
-      .map { response =>
-        response.status match {
-          case 200 => Right(response.json.as[TokenResponse])
-          case _   => Left((response.json \ "error_description").as[String])
-        }
-      }
-      .recover { case e: Exception => Left(e.getMessage) }
-  }
+    val body = Map(
+      "grant_type" -> Seq("password"),
+      "username" -> Seq(email),
+      "password" -> Seq(password),
+      "client_id" -> Seq(clientId),
+      "client_secret" -> Seq(clientSecret),
+      "audience" -> Seq(audience),
+      "scope" -> Seq("openid profile email offline_access")
+    )
 
-  def validateSession(session: Session): Future[Boolean] = {
-    session.get("access_token") match {
-      case Some(token) => validateJwt(token).map(_.isSuccess)
-      case None        => Future.successful(false)
-    }
+    makeAuthRequest(
+      url = tokenUrl,
+      method = "POST",
+      headers =
+        Seq(HeaderNames.CONTENT_TYPE -> "application/x-www-form-urlencoded"),
+      body = Some(body)
+    ) { response =>
+      response.status match {
+        case 200 => Right(response.json.as[TokenResponse])
+        case _   => Left((response.json \ "error_description").as[String])
+      }
+    }.recover { case e: Exception => Left(e.getMessage) }
   }
 
   def getUserInfo(accessToken: String): Future[Option[UserInfo]] = {
-    ws.url(userInfoUrl)
-      .withHttpHeaders(HeaderNames.AUTHORIZATION -> s"Bearer $accessToken")
-      .get()
-      .map { response =>
-        response.status match {
-          case 200 => Some(response.json.as[UserInfo])
-          case _   => None
-        }
+    makeAuthRequest(
+      url = userInfoUrl,
+      headers = Seq(HeaderNames.AUTHORIZATION -> s"Bearer $accessToken")
+    ) { response =>
+      response.status match {
+        case 200 => Some(response.json.as[UserInfo])
+        case _   => None
       }
+    }
   }
 
 }
