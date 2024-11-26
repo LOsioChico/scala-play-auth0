@@ -16,7 +16,7 @@ class AuthController @Inject() (
   authService: AuthService,
   config: Configuration
 )(implicit ec: ExecutionContext)
-  extends BaseController {
+  extends BaseController:
 
   private val domain      = config.get[String]("auth0.domain")
   private val clientId    = config.get[String]("auth0.clientId")
@@ -25,51 +25,51 @@ class AuthController @Inject() (
 
   def login(): Action[AnyContent] = Action {
     implicit request =>
-      request.session.get("access_token") match {
+      request.session.get("access_token") match
         case Some(_) => Redirect(routes.ApiController.home())
         case None    => Ok(views.html.auth.login())
-      }
   }
 
   def handleLogin(): Action[AnyContent] = Action.async {
     implicit request =>
       val jsonBody = Json.parse(request.body.asText.getOrElse(""))
 
-      val loginRequest = for {
+      val loginRequest = for
         email    <- (jsonBody \ "email").asOpt[String]
         password <- (jsonBody \ "password").asOpt[String]
-      } yield authService.loginWithPassword(email, password).flatMap {
-        case Right(tokenResponse) =>
-          authService.getUserInfo(tokenResponse.access_token).map {
-            userInfo =>
-              val session = Map(
-                "access_token"  -> tokenResponse.access_token,
-                "refresh_token" -> tokenResponse.refresh_token.getOrElse(""),
-                "id_token"      -> tokenResponse.id_token.getOrElse(""),
-                "user_info"     -> Json.toJson(userInfo).toString()
-              )
-              Redirect(routes.ApiController.home())
-                .withSession(session.toSeq*)
-          }
-        case Left(result) =>
-          Future.successful(Unauthorized(Json.toJson(result)))
-      }
+      yield authService
+        .loginWithPassword(email, password)
+        .flatMap:
+          case Left(result) =>
+            Future.successful(Unauthorized(Json.toJson(result)))
+          case Right(tokenResponse) =>
+            authService
+              .getUserInfo(tokenResponse.access_token)
+              .map: userInfo =>
+                val session = Map(
+                  "access_token"  -> tokenResponse.access_token,
+                  "refresh_token" -> tokenResponse.refresh_token.getOrElse(""),
+                  "id_token"      -> tokenResponse.id_token.getOrElse(""),
+                  "user_info"     -> Json.toJson(userInfo).toString()
+                )
+                Redirect(routes.ApiController.home())
+                  .withSession(session.toSeq*)
 
-      loginRequest.getOrElse(Future.successful(BadRequest("Invalid request body")))
+      loginRequest
+        .getOrElse(Future.successful(BadRequest("Invalid request body")))
   }
 
   def callback(code: Option[String], state: Option[String]): Action[AnyContent] =
     Action.async {
-      implicit request =>
-        code match {
-          case Some(authCode) =>
-            authService.getAuthorizationCodeToken(authCode).flatMap {
-              case Some(tokenResponse) => Future.successful(Ok("Token received"))
-              case None                => Future.successful(Unauthorized("Failed to get token"))
-            }
-          case None =>
-            Future.successful(BadRequest("No code provided"))
-        }
+      code match
+        case Some(authCode) =>
+          authService
+            .getAuthorizationCodeToken(authCode)
+            .map:
+              case Some(_) => Ok("Token received")
+              case None    => Unauthorized("Failed to get token")
+        case None =>
+          Future.successful(BadRequest("No code provided"))
     }
 
   def logout(): Action[AnyContent] = Action {
@@ -79,4 +79,3 @@ class AuthController @Inject() (
 
     Redirect(logoutUrl).withNewSession
   }
-}
