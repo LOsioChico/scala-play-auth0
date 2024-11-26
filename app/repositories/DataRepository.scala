@@ -4,7 +4,7 @@ import javax.inject.Singleton
 import models.{ Comment, Post }
 
 @Singleton
-class DataRepository {
+class DataRepository:
 
   private val posts = Seq(
     Post(1, "Breaking: New AI Breakthrough Changes Everything"),
@@ -17,13 +17,10 @@ class DataRepository {
     Comment(3, 2, "Historic moment for space exploration", "Space Fan")
   )
 
-  def getPost(postId: Int): Option[Post] = posts.collectFirst {
+  def getPost(postId: Int): Option[Post] = posts.collectFirst:
     case p if p.id == postId => p
-  }
 
   def getPosts: Seq[Post] = posts
 
-  def getComments(postId: Int): Seq[Comment] = comments.collect {
+  def getComments(postId: Int): Seq[Comment] = comments.collect:
     case c if c.postId == postId => c
-  }
-}

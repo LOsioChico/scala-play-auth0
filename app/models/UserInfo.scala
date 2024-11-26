@@ -12,7 +12,7 @@ case class UserInfo(
   updated_at: String
 )
 
-object UserInfo {
+object UserInfo:
   val empty: UserInfo = UserInfo(
     email = "",
     email_verified = false,
@@ -22,5 +22,5 @@ object UserInfo {
     sub = "",
     updated_at = ""
   )
+
   implicit val format: OFormat[UserInfo] = Json.format[UserInfo]
-}

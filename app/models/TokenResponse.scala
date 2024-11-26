@@ -10,6 +10,5 @@ case class TokenResponse(
   expires_in: Int
 )
 
-object TokenResponse {
+object TokenResponse:
   implicit val format: OFormat[TokenResponse] = Json.format[TokenResponse]
-}
