@@ -1,12 +1,13 @@
 # Auth routes
 
-GET /login controllers.AuthController.login()
+
 POST /login controllers.AuthController.handleLogin()
 GET /logout controllers.AuthController.logout()
 GET /callback controllers.AuthController.callback(code: Option[String], state: Option[String])
 
 # Web routes
 
+GET /login controllers.AuthController.login()
 GET / controllers.ApiController.home()
 GET /protected controllers.ApiController.protectedHome()
 
