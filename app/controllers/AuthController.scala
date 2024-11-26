@@ -49,7 +49,7 @@ class AuthController @Inject() (
                 "user_info"     -> Json.toJson(userInfo).toString()
               )
               Redirect(routes.ApiController.home())
-                .withSession(session.toSeq: _*)
+                .withSession(session.toSeq*)
           }
         case Left(result) =>
           Future.successful(Unauthorized(Json.toJson(result)))

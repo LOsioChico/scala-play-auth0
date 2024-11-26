@@ -114,7 +114,7 @@ class AuthService @Inject() (
   )(transform: play.api.libs.ws.WSResponse => T): Future[T] = {
     val request = ws
       .url(url)
-      .withHttpHeaders(headers: _*)
+      .withHttpHeaders(headers*)
 
     val finalRequest = method match {
       case "POST" => request.post(body.getOrElse(Map.empty))

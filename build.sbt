@@ -5,7 +5,7 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "3.3.1"
+scalaVersion := "3.5.0"
 
 libraryDependencies += guice
 libraryDependencies += ws
