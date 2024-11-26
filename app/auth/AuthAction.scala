@@ -17,7 +17,7 @@ class AuthAction @Inject() (
   bodyParser: BodyParsers.Default,
   authService: AuthService
 )(implicit ec: ExecutionContext)
-  extends ActionBuilder[UserRequest, AnyContent] {
+  extends ActionBuilder[UserRequest, AnyContent]:
 
   override def parser: BodyParser[AnyContent]               = bodyParser
   override protected def executionContext: ExecutionContext = ec
@@ -26,13 +26,12 @@ class AuthAction @Inject() (
     request: Request[A],
     block: UserRequest[A] => Future[Result]
   ): Future[Result] =
-    request.session.get("access_token") match {
+    request.session.get("access_token") match
       case Some(token) =>
-        authService.validateJwt(token).flatMap {
-          case Success(claim) => block(UserRequest(claim, token, request))
-          case Failure(t)     => Future.successful(Results.Unauthorized(t.getMessage))
-        }
+        authService
+          .validateJwt(token)
+          .flatMap:
+            case Success(claim) => block(UserRequest(claim, token, request))
+            case Failure(t)     => Future.successful(Results.Unauthorized(t.getMessage))
       case None =>
         Future.successful(Results.Unauthorized)
-    }
-}
