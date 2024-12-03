@@ -27,10 +27,11 @@ class AuthService @Inject() (
   private val audience     = config.get[String]("auth0.audience")
   private val redirectUri  = config.get[String]("auth0.redirectUri")
 
-  private val issuer      = s"https://$domain/"
-  private val jwksUrl     = s"https://$domain/.well-known/jwks.json"
-  private val tokenUrl    = s"https://$domain/oauth/token"
-  private val userInfoUrl = s"https://$domain/userinfo"
+  private val issuer            = s"https://$domain/"
+  private val jwksUrl           = s"https://$domain/.well-known/jwks.json"
+  private val tokenUrl          = s"https://$domain/oauth/token"
+  private val userInfoUrl       = s"https://$domain/userinfo"
+  private val changePasswordUrl = s"https://$domain/dbconnections/change_password"
 
   def getAuthorizationCodeToken(code: String): Future[Option[TokenResponse]] =
     val body = Map(
@@ -98,6 +99,27 @@ class AuthService @Inject() (
         claims    <- JwtJson.decode(token, publicKey, Seq(JwtAlgorithm.RS256))
         _         <- validateClaims(claims)
       yield claims
+
+  def resetPassword(email: String): Future[Either[String, String]] =
+    val body = Map(
+      "email"      -> Seq(email),
+      "client_id"  -> Seq(clientId),
+      "connection" -> Seq("Username-Password-Authentication")
+    )
+
+    makeAuthRequest(
+      url = changePasswordUrl,
+      method = "POST",
+      headers = Seq(
+        HeaderNames.CONTENT_TYPE -> "application/x-www-form-urlencoded"
+      ),
+      body = Some(body)
+    ) {
+      response =>
+        response.status match
+          case 200 => Right(response.body)
+          case _   => Left((response.json \ "error").as[String])
+    }
 
   private def makeAuthRequest[T](
     url: String,

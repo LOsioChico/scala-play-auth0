@@ -1,14 +1,15 @@
 # Auth routes
 
-
 POST /login controllers.AuthController.handleLogin()
+POST /reset-password controllers.AuthController.handleResetPassword()
 GET /logout controllers.AuthController.logout()
 GET /callback controllers.AuthController.callback(code: Option[String], state: Option[String])
 
 # Web routes
 
-GET /login controllers.AuthController.login()
 GET / controllers.ApiController.home()
+GET /login controllers.AuthController.login()
+GET /reset-password controllers.AuthController.resetPassword()
 GET /protected controllers.ApiController.protectedHome()
 
 # API routes

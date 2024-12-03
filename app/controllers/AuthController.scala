@@ -79,3 +79,22 @@ class AuthController @Inject() (
 
     Redirect(logoutUrl).withNewSession
   }
+
+  def resetPassword(): Action[AnyContent] = Action {
+    implicit request =>
+      Ok(views.html.auth.resetPassword())
+  }
+
+  def handleResetPassword(): Action[AnyContent] = Action.async {
+    implicit request =>
+      val jsonBody = Json.parse(request.body.asText.getOrElse(""))
+      val email    = (jsonBody \ "email").asOpt[String]
+      email match
+        case Some(email) =>
+          authService.resetPassword(email).map {
+            case Right(message) => Ok(message)
+            case Left(error)    => BadRequest(error)
+          }
+        case None =>
+          Future.successful(BadRequest("Email is required"))
+  }
